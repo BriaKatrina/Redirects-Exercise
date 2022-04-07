@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlTypes;
+using Xunit;
 
 namespace redirects_exercises
 {
-    class MyRouteAnalyzer : RouteAnalyzer
+    public class MyRouteAnalyzer : RouteAnalyzer
     {
         private static void Main()
         {
