@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Data;
-using System.Data.SqlTypes;
-using Xunit;
+using System.Collections.Generic;
 
-namespace redirects_exercises
+namespace RedirectsExercise
 {
-    public class MyRouteAnalyzer : RouteAnalyzer
-    {
+    public class Program {
         private static void Main()
         {
             MyRouteAnalyzer routeAnalyzer = new MyRouteAnalyzer();
@@ -31,7 +28,10 @@ namespace redirects_exercises
                 Console.WriteLine(route);
             }
         }
+    }
 
+    public class MyRouteAnalyzer : RouteAnalyzer
+    {
         public IEnumerable<string> Process(IEnumerable<string> routes)
         {
             IEnumerable<string> newRoutes = new string[] {};
