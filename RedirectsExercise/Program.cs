@@ -47,36 +47,47 @@ namespace RedirectsExercise
 
             // process routes into a nested array from the delimiter
             string delimiter = " -> ";
-            List<string[]> routePageData = new List<string[]>();
+            List<string[]> routeData = new List<string[]>();
             foreach (var (route, i) in routes.Select((value, i) => (value, i)))
             {
-                routePageData.Add(route.Split(delimiter));
+                routeData.Add(route.Split(delimiter));
             }
 
-            // process page data here
+            // process page data here (note: only currently works for one redirect, needs to be fixed)
             string lastPagePrevious = ""; // last page from the previous route
-            List<string[]> processedPageData = new List<string[]>();
-            foreach (var (routePages, i) in routePageData.Select((value, i) => (value, i)))
+            List<string[]> processedRouteData = new List<string[]>();
+            foreach (var (routePages, i) in routeData.Select((value, i) => (value, i)))
             {
                 string lastPage = ""; // last page navigated
+                List<string> processedRoutePages = new List<string>();
                 foreach ((string page, int j) in routePages.Select((value2, j) => (value2, j)))
                 {
+
                     if (page == lastPagePrevious && j == 0) {
-                        // this is where data will be joined from the previous route and the redirected route
-                        // add this joined data to the processPageData List
+                        // this is where data joins the previous route and the redirected route
+                        Console.WriteLine("redirected route found!");
+                        processedRoutePages = ((string[])routeData[i - 1]).Union(routeData[i]).ToList();
+                        processedRouteData.RemoveAt(i - 1);
+                        processedRouteData.Add(processedRoutePages.ToArray());
+                        lastPage = "redirected";
+                        break;
                     }
 
-                    // if no other processing happens, add routePages to processedPageData by default
+                    // if no other processing happened, add page to processedRoutePages
+                    processedRoutePages.Add(page);
 
                     lastPage = page;
                 }
+
+                if (lastPage != "redirected") processedRouteData.Add(processedRoutePages.ToArray());
+
                 lastPagePrevious = lastPage;
             }
 
             //
             // Console.WriteLine: prints interal processed pages for debugging
             //
-            foreach (string[] routePages in routePageData)
+            foreach (string[] routePages in processedRouteData)
             {
                 foreach (string page in routePages)
                 {
@@ -85,8 +96,8 @@ namespace RedirectsExercise
             }
 
             // pack nested array into single string array using the delimiter
-            string[] packedRouteData = new string[routePageData.Count()];
-            foreach (var (routePages, i) in routePageData.Select((value, i) => (value, i)))
+            string[] packedRouteData = new string[processedRouteData.Count()];
+            foreach (var (routePages, i) in processedRouteData.Select((value, i) => (value, i)))
             {
                 string processedRoute = "";
                 foreach (string page in routePages)
