@@ -43,6 +43,38 @@ namespace RedirectsExercise
 
     public class MyRouteAnalyzer : RouteAnalyzer
     {
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns>The processed List after first found redirect (if no redirect, returns null)</returns>
+        private List<string[]> ProcessRedirect(List<string[]> routeData)
+        {
+            List<string[]> processedRouteData = new List<string[]>();
+            List<string> firstValues = new List<string>();
+
+            // list of first values using corresponding index (perhaps this can be optimized further with linq)
+            foreach (var routePages in routeData)
+            {
+                firstValues.Add(routePages.First());
+
+            }
+
+            // iterate through each route
+            foreach (var (routePages, i) in routeData.Select((value, i) => (value, i)))
+            {
+                string lastPage = routePages.Last();
+
+                var firstIndex = firstValues.IndexOf(lastPage);
+                if (firstIndex != -1 && firstIndex != i)
+                {
+                    // redirect found! (do something here)
+                    Console.WriteLine("lastpage (" + lastPage + ") found at first element index: " + firstIndex);
+                }
+            }
+
+            return processedRouteData;
+        }
+
         public IEnumerable<string> Process(IEnumerable<string> routes)
         {
             // remove duplicates
@@ -55,6 +87,8 @@ namespace RedirectsExercise
             {
                 routeData.Add(route.Split(delimiter));
             }
+
+            ProcessRedirect(routeData);
 
             // process page data here
             string lastPagePrevious = ""; // last page from the previous route
