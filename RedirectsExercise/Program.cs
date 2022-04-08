@@ -42,24 +42,41 @@ namespace RedirectsExercise
     {
         public IEnumerable<string> Process(IEnumerable<string> routes)
         {
-            string delimiter = " -> ";
-            IEnumerable<string> newRoutes = new string[routes.Count()];
+            // remove duplicates
+            routes = routes.Distinct();
 
-            // process routes into a nested array from delimiter
-            string[][] routePageData = new string[routes.Count()][];
+            // process routes into a nested array from the delimiter
+            string delimiter = " -> ";
+            List<string[]> routePageData = new List<string[]>();
             foreach (var (route, i) in routes.Select((value, i) => (value, i)))
             {
-                routePageData[i] = route.Split(delimiter);
+                routePageData.Add(route.Split(delimiter));
             }
 
-            // process pages data here
-            string[][] processedRoutePageData = routePageData // fluent api calls?
-                                                    .ToArray();
+            // process page data here
+            string lastPagePrevious = ""; // last page from the previous route
+            List<string[]> processedPageData = new List<string[]>();
+            foreach (var (routePages, i) in routePageData.Select((value, i) => (value, i)))
+            {
+                string lastPage = ""; // last page navigated
+                foreach ((string page, int j) in routePages.Select((value2, j) => (value2, j)))
+                {
+                    if (page == lastPagePrevious && j == 0) {
+                        // this is where data will be joined from the previous route and the redirected route
+                        // add this joined data to the processPageData List
+                    }
+
+                    // if no other processing happens, add routePages to processedPageData by default
+
+                    lastPage = page;
+                }
+                lastPagePrevious = lastPage;
+            }
 
             //
             // Console.WriteLine: prints interal processed pages for debugging
             //
-            foreach (string[] routePages in processedRoutePageData)
+            foreach (string[] routePages in routePageData)
             {
                 foreach (string page in routePages)
                 {
@@ -67,9 +84,9 @@ namespace RedirectsExercise
                 }
             }
 
-            // pack nested array into single string array using delimiter
-            string[] packedRouteData = new string[processedRoutePageData.Count()];
-            foreach (var (routePages, i) in processedRoutePageData.Select((value, i) => (value, i)))
+            // pack nested array into single string array using the delimiter
+            string[] packedRouteData = new string[routePageData.Count()];
+            foreach (var (routePages, i) in routePageData.Select((value, i) => (value, i)))
             {
                 string processedRoute = "";
                 foreach (string page in routePages)
@@ -81,13 +98,13 @@ namespace RedirectsExercise
                 packedRouteData[i] = processedRoute.Remove(processedRoute.Count() - delimiter.Count(), delimiter.Count());
             }
 
-            newRoutes = (IEnumerable<string>) packedRouteData;
+            IEnumerable<string> newRoutes = (IEnumerable<string>) packedRouteData;
             return newRoutes;
         }
 
-        private bool isCircularReference(IEnumerable<string> routes) {
+        private bool checkCircularReference(IEnumerable<string> routes) {
             // check if there is a circular reference in the routes
-            return false;
+            return true;
         }
     }
 }
