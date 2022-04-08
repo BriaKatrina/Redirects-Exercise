@@ -99,6 +99,10 @@ namespace RedirectsExercise
                 lastPagePrevious = lastPage;
             }
 
+            // TODO: Check for circular reference
+            // (possible solution: use an array index crawler that scans through redirects)
+            // (goal: mimick website redirects and check if specific route location was visited twice)
+
             //
             // Console.WriteLine: prints interal processed pages for debugging
             //
