@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RedirectsExercise
 {
@@ -7,8 +8,9 @@ namespace RedirectsExercise
         private static void Main()
         {
             MyRouteAnalyzer routeAnalyzer = new MyRouteAnalyzer();
-            IEnumerable<string> routes = new string[]  // this is temp data
+            IEnumerable<string> routes = new string[]  // this is temp input data
             {
+                "/home",
                 "/home",
                 "/our-ceo.html -> /about-us.html",
                 "/about-us.html -> /about",
@@ -19,6 +21,9 @@ namespace RedirectsExercise
             {
                 Console.WriteLine(route);
             }
+
+            Console.WriteLine();
+            Console.WriteLine("route pages: ");
 
             // this is where you pass in string inputs for the routes
             IEnumerable<string> newRoutes = routeAnalyzer.Process(routes);
@@ -38,27 +43,45 @@ namespace RedirectsExercise
         public IEnumerable<string> Process(IEnumerable<string> routes)
         {
             string delimiter = " -> ";
-            IEnumerable<string> newRoutes = new string[] {};
+            IEnumerable<string> newRoutes = new string[routes.Count()];
 
-            // the route processing will be done here.
-
-            Console.WriteLine();
-            Console.WriteLine("route pages: ");
-            foreach (string route in routes)
+            // process routes into a nested array from delimiter
+            string[][] routePageData = new string[routes.Count()][];
+            foreach (var (route, i) in routes.Select((value, i) => (value, i)))
             {
-                string[] routePages = route.Split(delimiter);
+                routePageData[i] = route.Split(delimiter);
+            }
+
+            // process pages data here
+            string[][] processedRoutePageData = routePageData // fluent api calls?
+                                                    .ToArray();
+
+            //
+            // Console.WriteLine: prints interal processed pages for debugging
+            //
+            foreach (string[] routePages in processedRoutePageData)
+            {
                 foreach (string page in routePages)
                 {
                     Console.WriteLine("page: " + page);
                 }
             }
 
-            newRoutes = new string[]  // this is also temp data
+            // pack nested array into single string array using delimiter
+            string[] packedRouteData = new string[processedRoutePageData.Count()];
+            foreach (var (routePages, i) in processedRoutePageData.Select((value, i) => (value, i)))
             {
-                "/home",
-                "/our-ceo.html -> /about-us.html -> /about",
-                "/product-1.html -> /seo"
-            };
+                string processedRoute = "";
+                foreach (string page in routePages)
+                {
+                    processedRoute += page + delimiter;
+                }
+
+                // put processed delimiters into new string array
+                packedRouteData[i] = processedRoute.Remove(processedRoute.Count() - delimiter.Count(), delimiter.Count());
+            }
+
+            newRoutes = (IEnumerable<string>) packedRouteData;
             return newRoutes;
         }
 
