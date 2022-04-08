@@ -14,6 +14,9 @@ namespace RedirectsExercise
                 "/home",
                 "/our-ceo.html -> /about-us.html",
                 "/about-us.html -> /about",
+                "/test1 -> /test2",
+                "/test2 -> /test3",
+                "/test3 -> /test4",
                 "/product-1.html -> /seo"
             };
 
@@ -53,7 +56,7 @@ namespace RedirectsExercise
                 routeData.Add(route.Split(delimiter));
             }
 
-            // process page data here (note: only currently works for one redirect, needs to be fixed)
+            // process page data here
             string lastPagePrevious = ""; // last page from the previous route
             List<string[]> processedRouteData = new List<string[]>();
             foreach (var (routePages, i) in routeData.Select((value, i) => (value, i)))
@@ -64,22 +67,34 @@ namespace RedirectsExercise
                 {
 
                     if (page == lastPagePrevious && j == 0) {
+
+                        // NOTE: this only works for routes that follow after the previous route
+                        // That being at index "processedRouteData.Count - 1" of the processed data
+                        // To get this to work more thoroughly, perhaps use method calls checking all routes?
+
+                        // Console.WriteLine("redirected route found!");
+
                         // this is where data joins the previous route and the redirected route
-                        Console.WriteLine("redirected route found!");
-                        processedRoutePages = ((string[])routeData[i - 1]).Union(routeData[i]).ToList();
-                        processedRouteData.RemoveAt(i - 1);
+                        processedRoutePages =
+                            ((string[])processedRouteData[processedRouteData.Count - 1])
+                            .Union(routeData[i]).ToList();
+                        processedRouteData.RemoveAt(processedRouteData.Count - 1);
                         processedRouteData.Add(processedRoutePages.ToArray());
-                        lastPage = "redirected";
+
+                        // flag lastPagePrevious as having been redirected
+                        lastPagePrevious = "redirected";
+                        lastPage = processedRoutePages[processedRoutePages.Count - 1];
+                        // Console.WriteLine("redidirected last page: " + lastPage);
                         break;
                     }
 
-                    // if no other processing happened, add page to processedRoutePages
                     processedRoutePages.Add(page);
 
                     lastPage = page;
                 }
 
-                if (lastPage != "redirected") processedRouteData.Add(processedRoutePages.ToArray());
+                // if no previous data manipulation happened, add pages to processedRouteData
+                if (lastPagePrevious != "redirected") processedRouteData.Add(processedRoutePages.ToArray());
 
                 lastPagePrevious = lastPage;
             }

@@ -13,11 +13,15 @@ public class UnitTest1
         [Fact]
         public void TestRoutes()
         {
-            IEnumerable<string> testRoutes = new string[]  // this is temp data
+            IEnumerable<string> testRoutes = new string[]  // this is temp input data
             {
+                "/home",
                 "/home",
                 "/our-ceo.html -> /about-us.html",
                 "/about-us.html -> /about",
+                "/test1 -> /test2",
+                "/test2 -> /test3",
+                "/test3 -> /test4",
                 "/product-1.html -> /seo"
             };
 
@@ -25,6 +29,7 @@ public class UnitTest1
             {
                 "/home",
                 "/our-ceo.html -> /about-us.html -> /about",
+                "/test1 -> /test2 -> /test3 -> /test4",
                 "/product-1.html -> /seo"
             };
 
