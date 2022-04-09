@@ -19,6 +19,13 @@ namespace RedirectsExercise
                 "/test1 -> /test2",
                 "/product-1.html -> /seo"
             };
+            // IEnumerable<string> routes = new string[]  // this is temp input data
+            // {
+            //     "/home",
+            //     "/about -> /about-us.html",
+            //     "/about-us.html -> /about",
+            //     "/product-1.html -> /seo"
+            // };
 
             foreach (var route in routes)
             {
@@ -56,17 +63,14 @@ namespace RedirectsExercise
                 routeData.Add(route.Split(delimiter));
             }
 
-            // process page data here
+            // check for circular reference exception
+            checkCircularReference(routeData);
+
+            // process route redirects
             List<string[]> processedRouteData = BulkProcessRedirect(routeData);
             //List<string[]> processedRouteData = BulkProcessRedirectOrdered(routeData);
 
-            // TODO: Check for circular reference
-            // (possible solution: use an array index crawler that scans through redirects)
-            // (goal: mimick website redirects and check if specific route location was visited twice)
-
-            //
-            // Console.WriteLine: prints interal processed pages for debugging
-            //
+            // Show debug messages
             foreach (string[] routePages in processedRouteData)
             {
                 foreach (string page in routePages)
@@ -200,9 +204,34 @@ namespace RedirectsExercise
             return processedRouteData;
         }
 
-        private bool checkCircularReference(IEnumerable<string> routes) {
-            // check if there is a circular reference in the routes
-            return true;
+        private void checkCircularReference(List<string[]> routes) {
+            // throw exception if circular reference
+            // this is technically incomplete, as it relies on internal input redirect order
+            // wondering if I should rework SingleProcessRedirect to use something other than Union
+
+            List<string> visited = new List<string>();
+
+            foreach (var (routePage, i) in routes.Select((value, i) => (value, i)))
+            {
+                foreach (var page in routePage)
+                {
+                    if (visited.Contains(page)) {}
+                    visited.Add(page);
+                }
+
+                // quick solution (looking for reversed routes)
+                string[] reversedRoute = routePage.Reverse().ToArray();
+                if (routes.Any( r => {
+                        int index = routes.IndexOf(r);
+                        return Enumerable.SequenceEqual(r, reversedRoute) && index != i;
+                    }))
+                {
+                    throw new System.Exception("Circular Exception");
+                }
+            }
+
+            // (a possible solution: use an array index crawler that scans through redirects)
+            // (goal: mimick website redirects and check if specific route location was visited twice)
         }
     }
 }
