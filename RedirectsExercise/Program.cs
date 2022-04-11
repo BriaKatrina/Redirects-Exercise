@@ -105,6 +105,15 @@ namespace RedirectsExercise
 
         }
 
+        private void SingleProcessRedirect(List<Route> routeData)
+        {
+            bool redirectFound = false;
+
+
+
+            return redirectFound;
+        }
+
         private void CheckCircularReference(List<Route> routeData)
         {
 
