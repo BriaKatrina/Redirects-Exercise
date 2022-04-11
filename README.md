@@ -7,4 +7,4 @@ There are issues being worked on currently in the data-refactoring branch. Most 
 * Cleaner and easier to read/edit code, using new Route objects in a list.
 * Optimizing data processing (such as limiting garbage collection from processed List and data objects)
 
-The solution being worked on for this (in the data-refactoring branch) will use a Route object containing properties for the route (stored as string Path) and if it redirects to the next route in the list (stored as bool Redirect). Check the Issues tab for more info.
+The solution will use a Route object containing properties for the route (stored as string Path) and if it redirects to the next route in the list (stored as bool Redirect). Check the Issues tab for more info.
