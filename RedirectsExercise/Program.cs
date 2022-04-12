@@ -111,9 +111,7 @@ namespace RedirectsExercise
 
         private bool SingleProcessRedirect(List<Route> routeData)
         {
-            bool redirectFound = false;
             bool isFirst = true;
-
             for (int i = 0; i < routeData.Count; i++)
             {
                 Route route = routeData[i];
@@ -126,62 +124,51 @@ namespace RedirectsExercise
                         .SingleOrDefault();
 
                     // redirect found...?
-                    if (redirectRoute != null)
+                    if (redirectRoute != null && !Object.ReferenceEquals(redirectRoute, route))
                     {
-                        redirectFound = true;
+                        // yes, redirect found!
                         int redirectIndex = routeData.IndexOf(redirectRoute);
-
-                        int iLast = i;
-                        for (int _i = i; _i < routeData.Count; _i++)
-                        {
-                            if (!routeData[_i].Redirect)
-                            {
-                                iLast = _i;
-                                _i = routeData.Count;
-                            }
-                        }
-
-                        Console.WriteLine(iLast - i + 1);
+                        int iLast = FindLastIndexFromRoutes(i, routeData);
                         List<Route> routesToInsert = routeData.GetRange(i, iLast - i + 1);
+
+                        routeData.InsertRange(redirectIndex + 1, routesToInsert);
 
                         foreach (Route r in routesToInsert)
                         {
-                            Console.WriteLine("r: " + r.Path);
+                            r.Redirect = true;
+                            routeData.Remove(r);
                         }
+                        redirectRoute.Redirect = true;
+                        routesToInsert.Last().Redirect = false;
+                        routeData.Remove(route);
 
-                        // Yes! Redirect found!
-                        if (routesToInsert.Count > 0 && redirectIndex != i)
-                        {
-                            redirectRoute.Redirect = true;
-
-                            routeData.InsertRange(redirectIndex + 1, routesToInsert);
-
-                            foreach (Route r in routesToInsert)
-                            {
-                                Console.Write(r.Path + ", ");
-
-                                r.Redirect = true;
-                                routeData.Remove(r);
-                            }
-                            routesToInsert.Last().Redirect = false;
-                            routeData.Remove(route);
-
-                            Console.WriteLine("/*****");
-
-                            return true;
-                        }
+                        return true;
                     }
                 }
 
                 isFirst = !route.Redirect;
             }
 
-            return redirectFound;
+            return false;
         }
 
         private void CheckCircularReference(List<Route> routeData)
         {
 
+        }
+
+        private int FindLastIndexFromRoutes(int startIndex, List<Route> routeData)
+        {
+            int iLast = startIndex;
+            for (int _i = startIndex; _i < routeData.Count; _i++)
+            {
+                if (!routeData[_i].Redirect)
+                {
+                    iLast = _i; // this will be the new last index of the redirected route
+                    break;
+                }
+            }
+            return iLast;
         }
     }
 }
