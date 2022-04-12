@@ -19,13 +19,6 @@ namespace RedirectsExercise
                 "/test1 -> /test2",
                 "/product-1.html -> /seo"
             };
-            // IEnumerable<string> routes = new string[]  // this is temp input data
-            // {
-            //     "/home",
-            //     "/about -> /about-us.html",
-            //     "/about-us.html -> /about",
-            //     "/product-1.html -> /seo"
-            // };
 
             foreach (var route in routes)
             {
