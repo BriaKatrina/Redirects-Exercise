@@ -88,7 +88,6 @@ namespace RedirectsExercise
             {
                 packedRoute += route.Path + delimiter;
 
-                //
                 if (!route.Redirect)
                 {
                     packedRouteData.Add(packedRoute.Remove(packedRoute.Count() - delimiter.Count(), delimiter.Count()));
@@ -154,8 +153,78 @@ namespace RedirectsExercise
 
         private void CheckCircularReference(List<Route> routeData)
         {
+            List<Route> firstRoutes = new List<Route>();
+            bool isFirst = true;
+            foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
+            {
+                if (isFirst && route.Redirect) {
+                    firstRoutes.Add(route);
+                    Console.WriteLine("Adding first route: " + route.Path + ", at index i: " + i);
+                }
 
+                isFirst = !route.Redirect;
+            }
+
+            for (int i = 0; i < routeData.Count; i++)
+            {
+                Route route = routeData[i];
+
+                if (!route.Redirect) // is last route in sequence, see if it redirects
+                {
+                    Route matchingRoute = firstRoutes
+                        .Where(r => r.Path == route.Path)
+                        .FirstOrDefault();
+
+                    if (matchingRoute != null) // found redirect!
+                    {
+                        int matchingRouteFirstIndex = routeData.IndexOf(matchingRoute);
+                        int matchingRouteLastIndex = FindLastIndexFromRoutes(matchingRouteFirstIndex, routeData);
+                        Route newRoute = routeData[matchingRouteLastIndex];
+
+                        Console.WriteLine("From route: " + route.Path + ", at index i: " + i);
+
+                        Console.WriteLine("matchingRoute: " + matchingRoute.Path + ", first index: " + matchingRouteFirstIndex);
+                        Console.WriteLine("newRoute: " + newRoute.Path + ", last index: " + matchingRouteLastIndex);
+
+                        Route newMatchingRoute = firstRoutes
+                            .Where(r => r.Path == newRoute.Path)
+                            .FirstOrDefault();
+
+                        if (newMatchingRoute != null) // ...another redirect found!
+                        {
+                            int newMatchingRouteFirstIndex = routeData.IndexOf(newMatchingRoute);
+                            int newMatchingRouteLastIndex = FindLastIndexFromRoutes(newMatchingRouteFirstIndex, routeData);
+                            Route potentialCircularRoute = routeData[newMatchingRouteLastIndex];
+
+                            Console.WriteLine("newMatchingRoute: " + newMatchingRoute.Path + ", first index: " + newMatchingRouteFirstIndex);
+                            Console.WriteLine("newNewRoute: " + potentialCircularRoute.Path + ", last index: " + newMatchingRouteLastIndex);
+
+                            if (newMatchingRouteLastIndex == i) // okay, this is a circular loop
+                            {
+                                throw new System.Exception("Circular Exception");
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        // private List<List<string>> GetRouteDataLists(List<List<string>> routeData)
+        // {
+        //     List<List<string>> routeDataLists = new List<List<string>>();
+        //     List<string> dataList = new List<string>();
+        //     foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
+        //     {
+        //         dataList.Add(route);
+
+        //         if (!route.Redirect)
+        //         {
+        //             routeDataLists.Add(dataList);
+        //             dataList.Clear();
+        //         }
+        //     }
+        //     return routeDataLists;
+        // }
 
         private int FindLastIndexFromRoutes(int startIndex, List<Route> routeData)
         {
