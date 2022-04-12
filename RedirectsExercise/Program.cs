@@ -19,13 +19,6 @@ namespace RedirectsExercise
                 "/test1 -> /test2",
                 "/product-1.html -> /product-2.html -> /seo"
             };
-            // IEnumerable<string> routes = new string[]  // this is temp input data
-            // {
-            //     "/home",
-            //     "/about -> /about-us.html",
-            //     "/about-us.html -> /about",
-            //     "/product-1.html -> /seo"
-            // };
 
             foreach (var route in routes)
             {
@@ -159,7 +152,6 @@ namespace RedirectsExercise
             {
                 if (isFirst && route.Redirect) {
                     firstRoutes.Add(route);
-                    Console.WriteLine("Adding first route: " + route.Path + ", at index i: " + i);
                 }
 
                 isFirst = !route.Redirect;
@@ -182,7 +174,6 @@ namespace RedirectsExercise
                         Route newRoute = routeData[matchingRouteLastIndex];
 
                         Console.WriteLine("From route: " + route.Path + ", at index i: " + i);
-
                         Console.WriteLine("matchingRoute: " + matchingRoute.Path + ", first index: " + matchingRouteFirstIndex);
                         Console.WriteLine("newRoute: " + newRoute.Path + ", last index: " + matchingRouteLastIndex);
 
