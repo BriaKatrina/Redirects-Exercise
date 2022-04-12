@@ -17,7 +17,7 @@ namespace RedirectsExercise
                 "/test3 -> /test4",
                 "/test2 -> /test3",
                 "/test1 -> /test2",
-                "/product-1.html -> /seo"
+                "/product-1.html -> /product-2.html -> /seo"
             };
 
             foreach (var route in routes)
@@ -48,183 +48,187 @@ namespace RedirectsExercise
             // remove duplicates
             routes = routes.Distinct();
 
-            // process routes into a nested array from the delimiter
+            // process routes into Route objects from the delimiter
             string delimiter = " -> ";
-            List<string[]> routeData = new List<string[]>();
+            List<Route> routeData = new List<Route>();
             foreach (var (route, i) in routes.Select((value, i) => (value, i)))
             {
-                routeData.Add(route.Split(delimiter));
+                string[] nestedRoutes = route.Split(delimiter);
+                foreach (string nestedPath in nestedRoutes)
+                {
+                    routeData.Add(new Route(nestedPath, true));
+                }
+                routeData.Last().Redirect = false;
             }
 
             // check for circular reference exception
-            checkCircularReference(routeData);
+            CheckCircularReference(routeData);
 
             // process route redirects
-            List<string[]> processedRouteData = BulkProcessRedirect(routeData);
-            //List<string[]> processedRouteData = BulkProcessRedirectOrdered(routeData);
+            BulkProcessRedirect(routeData);
 
             // Show debug messages
-            foreach (string[] routePages in processedRouteData)
+            foreach (Route route in routeData)
             {
-                foreach (string page in routePages)
+                Console.WriteLine("Path: " + route.Path + ", Redirect: " + route.Redirect);
+            }
+
+            // pack route paths into a string list with the delimiter
+            List<string> packedRouteData = new List<string>();
+            int packedRouteIndex = 0; // index for new list
+            string packedRoute = ""; // iteratively adds paths to
+            foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
+            {
+                packedRoute += route.Path + delimiter;
+
+                if (!route.Redirect)
                 {
-                    Console.WriteLine("page: " + page);
+                    packedRouteData.Add(packedRoute.Remove(packedRoute.Count() - delimiter.Count(), delimiter.Count()));
+                    packedRoute = "";
+                    packedRouteIndex++;
                 }
             }
 
-            // pack nested array into single string array using the delimiter
-            string[] packedRouteData = new string[processedRouteData.Count()];
-            foreach (var (routePages, i) in processedRouteData.Select((value, i) => (value, i)))
+            return (IEnumerable<string>) packedRouteData;
+        }
+
+        private void BulkProcessRedirect(List<Route> routeData)
+        {
+            bool redirected = true; // let's assume that it need redirecting
+            while (redirected)
             {
-                string processedRoute = "";
-                foreach (string page in routePages)
+                redirected = SingleProcessRedirect(routeData);
+            }
+        }
+
+        private bool SingleProcessRedirect(List<Route> routeData)
+        {
+            bool isFirst = true;
+            for (int i = 0; i < routeData.Count; i++)
+            {
+                Route route = routeData[i];
+
+                if (isFirst && route.Redirect)
                 {
-                    processedRoute += page + delimiter;
+                    // search for redirect
+                    Route redirectRoute = routeData
+                        .Where(r => !r.Redirect && r.Path == route.Path)
+                        .SingleOrDefault();
+
+                    // redirect found...?
+                    if (redirectRoute != null && !Object.ReferenceEquals(redirectRoute, route))
+                    {
+                        // yes, redirect found!
+                        int redirectIndex = routeData.IndexOf(redirectRoute);
+                        int iLast = FindLastIndexFromRoutes(i, routeData);
+                        List<Route> routesToInsert = routeData.GetRange(i, iLast - i + 1);
+
+                        routeData.InsertRange(redirectIndex + 1, routesToInsert);
+
+                        foreach (Route r in routesToInsert)
+                        {
+                            r.Redirect = true;
+                            routeData.Remove(r);
+                        }
+                        redirectRoute.Redirect = true;
+                        routesToInsert.Last().Redirect = false;
+                        routeData.Remove(route);
+
+                        return true;
+                    }
                 }
 
-                // put processed delimiters into new string array
-                packedRouteData[i] = processedRoute.Remove(processedRoute.Count() - delimiter.Count(), delimiter.Count());
+                isFirst = !route.Redirect;
             }
 
-            IEnumerable<string> newRoutes = (IEnumerable<string>) packedRouteData;
-            return newRoutes;
+            return false;
         }
 
-        private List<string[]> BulkProcessRedirect(List<string[]> routeData)
+        private void CheckCircularReference(List<Route> routeData)
         {
-            List<string[]> processedRouteData = new List<string[]>(routeData);
-            List<string[]> singleProcessedData = null;
-            while ((singleProcessedData = SingleProcessRedirect(processedRouteData)) != null)
+            List<Route> firstRoutes = new List<Route>();
+            bool isFirst = true;
+            foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
             {
-                processedRouteData = singleProcessedData;
+                if (isFirst && route.Redirect) {
+                    firstRoutes.Add(route);
+                }
+
+                isFirst = !route.Redirect;
             }
 
-            return processedRouteData;
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <returns>The processed List after first found redirect (if no redirect, returns null)</returns>
-        private List<string[]> SingleProcessRedirect(List<string[]> routeData)
-        {
-            List<string[]> processedRouteData = new List<string[]>(routeData);
-            List<string> firstValues = new List<string>();
-            bool redirectFound = false;
-
-            // list of first values using corresponding index (perhaps this can be optimized further with linq)
-            foreach (var routePages in routeData)
+            for (int i = 0; i < routeData.Count; i++)
             {
-                firstValues.Add(routePages.First());
-            }
+                Route route = routeData[i];
 
-            // iterate through each route's last page looking for a redirect
-            foreach (var (routePages, i) in routeData.Select((value, i) => (value, i)))
-            {
-                string lastPage = routePages.Last();
-
-                var firstIndex = firstValues.IndexOf(lastPage);
-                if (!redirectFound && firstIndex != -1 && firstIndex != i)
+                if (!route.Redirect) // is last route in sequence, see if it redirects
                 {
-                    // redirect found! (flag as done)
-                    redirectFound = true;
-                    Console.WriteLine("lastpage (" + lastPage + ") found at first element index: " + firstIndex);
+                    Route matchingRoute = firstRoutes
+                        .Where(r => r.Path == route.Path)
+                        .FirstOrDefault();
 
-                    if (i < firstIndex)
+                    if (matchingRoute != null) // found redirect!
                     {
-                        processedRouteData.RemoveAt(firstIndex);
-                        processedRouteData.RemoveAt(i);
+                        int matchingRouteFirstIndex = routeData.IndexOf(matchingRoute);
+                        int matchingRouteLastIndex = FindLastIndexFromRoutes(matchingRouteFirstIndex, routeData);
+                        Route newRoute = routeData[matchingRouteLastIndex];
+
+                        Console.WriteLine("From route: " + route.Path + ", at index i: " + i);
+                        Console.WriteLine("matchingRoute: " + matchingRoute.Path + ", first index: " + matchingRouteFirstIndex);
+                        Console.WriteLine("newRoute: " + newRoute.Path + ", last index: " + matchingRouteLastIndex);
+
+                        Route newMatchingRoute = firstRoutes
+                            .Where(r => r.Path == newRoute.Path)
+                            .FirstOrDefault();
+
+                        if (newMatchingRoute != null) // ...another redirect found!
+                        {
+                            int newMatchingRouteFirstIndex = routeData.IndexOf(newMatchingRoute);
+                            int newMatchingRouteLastIndex = FindLastIndexFromRoutes(newMatchingRouteFirstIndex, routeData);
+                            Route potentialCircularRoute = routeData[newMatchingRouteLastIndex];
+
+                            Console.WriteLine("newMatchingRoute: " + newMatchingRoute.Path + ", first index: " + newMatchingRouteFirstIndex);
+                            Console.WriteLine("newNewRoute: " + potentialCircularRoute.Path + ", last index: " + newMatchingRouteLastIndex);
+
+                            if (newMatchingRouteLastIndex == i) // okay, this is a circular loop
+                            {
+                                throw new System.Exception("Circular Exception");
+                            }
+                        }
                     }
-                    else
-                    {
-                        processedRouteData.RemoveAt(i);
-                        processedRouteData.RemoveAt(firstIndex);
-                    }
-                    processedRouteData.Add(routePages.Union(routeData[firstIndex]).ToArray());
+                }
+            }
+        }
+
+        // private List<List<string>> GetRouteDataLists(List<List<string>> routeData)
+        // {
+        //     List<List<string>> routeDataLists = new List<List<string>>();
+        //     List<string> dataList = new List<string>();
+        //     foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
+        //     {
+        //         dataList.Add(route);
+
+        //         if (!route.Redirect)
+        //         {
+        //             routeDataLists.Add(dataList);
+        //             dataList.Clear();
+        //         }
+        //     }
+        //     return routeDataLists;
+        // }
+
+        private int FindLastIndexFromRoutes(int startIndex, List<Route> routeData)
+        {
+            int iLast = startIndex;
+            for (int _i = startIndex; _i < routeData.Count; _i++)
+            {
+                if (!routeData[_i].Redirect)
+                {
+                    iLast = _i; // this will be the new last index of the redirected route
                     break;
                 }
             }
-
-            if (!redirectFound) return null;
-
-            return processedRouteData;
-        }
-
-        private List<string[]> BulkProcessRedirectOrdered(List<string[]> routeData)
-        {
-            string lastPagePrevious = ""; // last page from the previous route
-            List<string[]> processedRouteData = new List<string[]>();
-            foreach (var (routePages, i) in routeData.Select((value, i) => (value, i)))
-            {
-                string lastPage = ""; // last page navigated
-                List<string> processedRoutePages = new List<string>();
-                foreach ((string page, int j) in routePages.Select((value2, j) => (value2, j)))
-                {
-
-                    if (page == lastPagePrevious && j == 0) {
-
-                        // NOTE: this only works for routes that follow after the previous route
-                        // That being at index "processedRouteData.Count - 1" of the processed data
-                        // To get this to work more thoroughly, perhaps use method calls checking all routes?
-
-                        // Console.WriteLine("redirected route found!");
-
-                        // this is where data joins the previous route and the redirected route
-                        processedRoutePages =
-                            ((string[])processedRouteData[processedRouteData.Count - 1])
-                            .Union(routeData[i]).ToList();
-                        processedRouteData.RemoveAt(processedRouteData.Count - 1);
-                        processedRouteData.Add(processedRoutePages.ToArray());
-
-                        // flag lastPagePrevious as having been redirected
-                        lastPagePrevious = "redirected";
-                        lastPage = processedRoutePages[processedRoutePages.Count - 1];
-                        // Console.WriteLine("redidirected last page: " + lastPage);
-                        break;
-                    }
-
-                    processedRoutePages.Add(page);
-
-                    lastPage = page;
-                }
-
-                // if no previous data manipulation happened, add pages to processedRouteData
-                if (lastPagePrevious != "redirected") processedRouteData.Add(processedRoutePages.ToArray());
-
-                lastPagePrevious = lastPage;
-            }
-
-            return processedRouteData;
-        }
-
-        private void checkCircularReference(List<string[]> routes) {
-            // throw exception if circular reference
-            // this is technically incomplete, as it relies on internal input redirect order
-            // wondering if I should rework SingleProcessRedirect to use something other than Union
-
-            List<string> visited = new List<string>();
-
-            foreach (var (routePage, i) in routes.Select((value, i) => (value, i)))
-            {
-                foreach (var page in routePage)
-                {
-                    if (visited.Contains(page)) {}
-                    visited.Add(page);
-                }
-
-                // quick solution (looking for reversed routes)
-                string[] reversedRoute = routePage.Reverse().ToArray();
-                if (routes.Any( r => {
-                        int index = routes.IndexOf(r);
-                        return Enumerable.SequenceEqual(r, reversedRoute) && index != i;
-                    }))
-                {
-                    throw new System.Exception("Circular Exception");
-                }
-            }
-
-            // (a possible solution: use an array index crawler that scans through redirects)
-            // (goal: mimick website redirects and check if specific route location was visited twice)
+            return iLast;
         }
     }
 }
