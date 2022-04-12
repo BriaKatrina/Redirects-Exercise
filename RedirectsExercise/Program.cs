@@ -146,7 +146,7 @@ namespace RedirectsExercise
 
         private void CheckCircularReference(List<Route> routeData)
         {
-            List<Route> firstRoutes = new List<Route>();
+            List<Route> firstRoutes = new List<Route>(); // find first routes of redirect sequences
             bool isFirst = true;
             foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
             {
@@ -173,10 +173,6 @@ namespace RedirectsExercise
                         int matchingRouteLastIndex = FindLastIndexFromRoutes(matchingRouteFirstIndex, routeData);
                         Route newRoute = routeData[matchingRouteLastIndex];
 
-                        Console.WriteLine("From route: " + route.Path + ", at index i: " + i);
-                        Console.WriteLine("matchingRoute: " + matchingRoute.Path + ", first index: " + matchingRouteFirstIndex);
-                        Console.WriteLine("newRoute: " + newRoute.Path + ", last index: " + matchingRouteLastIndex);
-
                         Route newMatchingRoute = firstRoutes
                             .Where(r => r.Path == newRoute.Path)
                             .FirstOrDefault();
@@ -187,9 +183,6 @@ namespace RedirectsExercise
                             int newMatchingRouteLastIndex = FindLastIndexFromRoutes(newMatchingRouteFirstIndex, routeData);
                             Route potentialCircularRoute = routeData[newMatchingRouteLastIndex];
 
-                            Console.WriteLine("newMatchingRoute: " + newMatchingRoute.Path + ", first index: " + newMatchingRouteFirstIndex);
-                            Console.WriteLine("newNewRoute: " + potentialCircularRoute.Path + ", last index: " + newMatchingRouteLastIndex);
-
                             if (newMatchingRouteLastIndex == i) // okay, this is a circular loop
                             {
                                 throw new System.Exception("Circular Exception");
@@ -199,23 +192,6 @@ namespace RedirectsExercise
                 }
             }
         }
-
-        // private List<List<string>> GetRouteDataLists(List<List<string>> routeData)
-        // {
-        //     List<List<string>> routeDataLists = new List<List<string>>();
-        //     List<string> dataList = new List<string>();
-        //     foreach (var (route, i) in routeData.Select((value, i) => (value, i)))
-        //     {
-        //         dataList.Add(route);
-
-        //         if (!route.Redirect)
-        //         {
-        //             routeDataLists.Add(dataList);
-        //             dataList.Clear();
-        //         }
-        //     }
-        //     return routeDataLists;
-        // }
 
         private int FindLastIndexFromRoutes(int startIndex, List<Route> routeData)
         {
