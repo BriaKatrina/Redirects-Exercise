@@ -102,14 +102,79 @@ namespace RedirectsExercise
 
         private void BulkProcessRedirect(List<Route> routeData)
         {
-
+            bool redirected = true; // let's assume that it need redirecting
+            while (redirected)
+            {
+                redirected = SingleProcessRedirect(routeData);
+            }
         }
 
-        private void SingleProcessRedirect(List<Route> routeData)
+        private bool SingleProcessRedirect(List<Route> routeData)
         {
             bool redirectFound = false;
+            bool isFirst = true;
 
+            for (int i = 0; i < routeData.Count; i++)
+            {
+                Route route = routeData[i];
 
+                if (isFirst && route.Redirect)
+                {
+                    // search for redirect
+                    Route redirectRoute = routeData
+                        .Where(r => !r.Redirect && r.Path == route.Path)
+                        .SingleOrDefault();
+
+                    // redirect found...?
+                    if (redirectRoute != null)
+                    {
+                        redirectFound = true;
+                        int redirectIndex = routeData.IndexOf(redirectRoute);
+
+                        int iLast = i;
+                        for (int _i = i; _i < routeData.Count; _i++)
+                        {
+                            if (!routeData[_i].Redirect)
+                            {
+                                iLast = _i;
+                                _i = routeData.Count;
+                            }
+                        }
+
+                        Console.WriteLine(iLast - i + 1);
+                        List<Route> routesToInsert = routeData.GetRange(i, iLast - i + 1);
+
+                        foreach (Route r in routesToInsert)
+                        {
+                            Console.WriteLine("r: " + r.Path);
+                        }
+
+                        // Yes! Redirect found!
+                        if (routesToInsert.Count > 0 && redirectIndex != i)
+                        {
+                            redirectRoute.Redirect = true;
+
+                            routeData.InsertRange(redirectIndex + 1, routesToInsert);
+
+                            foreach (Route r in routesToInsert)
+                            {
+                                Console.Write(r.Path + ", ");
+
+                                r.Redirect = true;
+                                routeData.Remove(r);
+                            }
+                            routesToInsert.Last().Redirect = false;
+                            routeData.Remove(route);
+
+                            Console.WriteLine("/*****");
+
+                            return true;
+                        }
+                    }
+                }
+
+                isFirst = !route.Redirect;
+            }
 
             return redirectFound;
         }
