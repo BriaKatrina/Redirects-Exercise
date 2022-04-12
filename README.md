@@ -1,12 +1,7 @@
 # Redirects-Exercise
 
-This exercise tests a custom route analyzer, processing a series of strings in an IEnumerable collection.
+This exercise tests a custom route analyzer, processing a series of strings in an IEnumerable collection. The tests run currently pass, checking for two cases of redirect examples (including removing simple duplicate routes), and one case checking for a Circular Exception based on looping routes.
 
 ---
 
-**Issues being worked on in data-refactoring:**
-* Solving specific route redirection cases (examples in Issues tab)
-* (solved) ~Cleaner and easier to read/edit code, using new Route objects in a list.~
-* Optimizing data processing (such as limiting garbage collection from processed List and data objects)
-
-The solution will use a Route object containing properties for the route (stored as string Path) and if it redirects to the next route in the list (stored as bool Redirect). Check the Issues tab for more info.
+A new solution pulled from data-refactoring uses a Route object containing properties for the route (stored as string Path) and if it redirects to the next route in the list (stored as bool Redirect). Check the Issues tab for more info.
